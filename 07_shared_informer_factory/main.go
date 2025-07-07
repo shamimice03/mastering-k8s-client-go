@@ -76,6 +76,7 @@ func setupPodMonitor(factory informers.SharedInformerFactory) {
 
 // Controller 2: Deployment Manager
 // Deployment Manager by implementing cache.ResourceEventHandler
+// Just showing another way to implement
 type DeploymentHandler struct{}
 
 func (h *DeploymentHandler) OnAdd(obj interface{}, isInInitialList bool) {
