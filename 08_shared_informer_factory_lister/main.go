@@ -47,24 +47,24 @@ func main() {
 		log.Fatalf("Failed to connect to cluster: %v", err)
 	}
 	fmt.Println("Successfully connected to cluster")
+
 	// Single factory for all informers
 	factory := informers.NewSharedInformerFactory(clientset, time.Second*30)
+
 	// Setup informers (this registers them with the factory)
 	setupInformers(factory)
+
 	// Start all informers at once
 	stopCh := make(chan struct{})
 	factory.Start(stopCh)
-	// defer factory.Shutdown()
 
 	// Wait for cache sync
 	fmt.Println("Waiting for cache sync...")
 	factory.WaitForCacheSync(stopCh)
 	fmt.Println("Cache sync completed!")
 
-	// Now demonstrate listers
-	demonstrateListers(factory)
-
-	fmt.Println("Lister demonstration completed!")
+	// Query resources using listers
+	useListers(factory)
 
 	// Close the channel to stop informers and exit
 	close(stopCh)
@@ -77,14 +77,12 @@ func setupInformers(factory informers.SharedInformerFactory) {
 	factory.Apps().V1().Deployments().Informer()
 }
 
-func demonstrateListers(factory informers.SharedInformerFactory) {
+func useListers(factory informers.SharedInformerFactory) {
 	// Get listers
 	podLister := factory.Core().V1().Pods().Lister()
 	deploymentLister := factory.Apps().V1().Deployments().Lister()
 
-	// Query cached data efficiently
-
-	// 1. Get ALL pods (across all namespaces)
+	// Get ALL pods (across all namespaces)
 	allPods, err := podLister.List(labels.Everything())
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -102,7 +100,7 @@ func demonstrateListers(factory informers.SharedInformerFactory) {
 		fmt.Printf("  %s: %d pods\n", ns, count)
 	}
 
-	// 2. Get pods in default namespace specifically
+	// Get pods in default namespace specifically
 	defaultPods, err := podLister.Pods("default").List(labels.Everything())
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -110,7 +108,7 @@ func demonstrateListers(factory informers.SharedInformerFactory) {
 	}
 	fmt.Printf("Pods in default namespace: %d\n", len(defaultPods))
 
-	// 3. Get specific pod by name (if any pods exist)
+	// Get specific pod by name (if any pods exist)
 	if len(allPods) > 0 {
 		firstPod := allPods[0]
 		pod, err := podLister.Pods(firstPod.Namespace).Get(firstPod.Name)
@@ -121,7 +119,7 @@ func demonstrateListers(factory informers.SharedInformerFactory) {
 		}
 	}
 
-	// 4. Filter by labels (try different labels if nginx doesn't exist)
+	// Filter by labels
 	labelSelector, _ := labels.Parse("app=nginx")
 	nginxPods, err := podLister.List(labelSelector)
 	if err != nil {
@@ -130,30 +128,11 @@ func demonstrateListers(factory informers.SharedInformerFactory) {
 	}
 	fmt.Printf("Nginx pods: %d\n", len(nginxPods))
 
-	// Try other common labels
-	if len(nginxPods) == 0 {
-		// Try k8s-app label (common in system pods)
-		labelSelector, _ = labels.Parse("k8s-app")
-		systemPods, err := podLister.List(labelSelector)
-		if err == nil {
-			fmt.Printf("Pods with k8s-app label: %d\n", len(systemPods))
-		}
-	}
-
-	// 5. Query ALL deployments
+	// Query ALL deployments
 	allDeployments, err := deploymentLister.List(labels.Everything())
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
 	fmt.Printf("Total deployments (all namespaces): %d\n", len(allDeployments))
-
-	// Show deployments by namespace
-	if len(allDeployments) > 0 {
-		fmt.Println("Deployments:")
-		for _, deployment := range allDeployments {
-			fmt.Printf("  %s/%s (replicas: %d)\n",
-				deployment.Namespace, deployment.Name, *deployment.Spec.Replicas)
-		}
-	}
 }
