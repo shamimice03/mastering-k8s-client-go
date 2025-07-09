@@ -72,7 +72,7 @@ func main() {
 	factory.WaitForCacheSync(stopCh)
 	fmt.Println("Cache sync completed!")
 
-	// Demonstrate custom indexer queries on cached data
+	// Perform custom indexer queries on cached data
 	queryWithCustomIndexers(factory)
 
 	// Close the channel to signal all informers to stop and exit program
@@ -81,7 +81,7 @@ func main() {
 
 // setupInformersWithCustomIndex creates Pod informer and adds custom indexes
 func setupInformersWithCustomIndex(factory informers.SharedInformerFactory) {
-	// Get Pod informer from factory (creates it if doesn't exist)
+	// Get Pod informer from factory
 	podInformer := factory.Core().V1().Pods()
 
 	// Add custom indexers to enable O(1) lookups by specific fields
