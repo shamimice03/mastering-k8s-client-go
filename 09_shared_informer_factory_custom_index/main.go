@@ -81,7 +81,7 @@ func main() {
 
 // setupInformersWithCustomIndex creates Pod informer and adds custom indexes
 func setupInformersWithCustomIndex(factory informers.SharedInformerFactory) {
-	// Get Pod informer from factory
+	// Get Pod informer from factory (creates it if doesn't exist)
 	podInformer := factory.Core().V1().Pods()
 
 	// Add custom indexers to enable O(1) lookups by specific fields
